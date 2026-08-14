@@ -1,0 +1,54 @@
+name: Configure Supabase connection
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  configure:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure client
+        env:
+          SUPABASE_URL: https://lcyjvtisriaqvudjikcw.supabase.co
+          SUPABASE_KEY: sb_publishable_yp3tUVCVZwbFfN16Kj7vjw_cC2vP_lJ
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+
+          url = os.environ['SUPABASE_URL']
+          key = os.environ['SUPABASE_KEY']
+
+          p = Path('index.html')
+          s = p.read_text()
+          old = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}'),db="
+          new = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}');if(!cfg.url||!cfg.key){cfg={url:'"+url+"',key:'"+key+"'};localStorage.setItem('mplSupabaseConfig',JSON.stringify(cfg))};let db="
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          p = Path('admin.html')
+          s = p.read_text()
+          old = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}'),sb=null,db="
+          new = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}');if(!cfg.url||!cfg.key){cfg={url:'"+url+"',key:'"+key+"'};localStorage.setItem('mplSupabaseConfig',JSON.stringify(cfg))};let sb=null,db="
+          if old in s:
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+
+      - name: Commit configured files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html admin.html
+          git diff --cached --quiet || git commit -m "Connect site to Supabase automatically"
+          git push
