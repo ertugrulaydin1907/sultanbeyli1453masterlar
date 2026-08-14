@@ -42,6 +42,10 @@ jobs:
           new = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}');if(!cfg.url||!cfg.key){cfg={url:'"+url+"',key:'"+key+"'};localStorage.setItem('mplSupabaseConfig',JSON.stringify(cfg))};let sb=null,db="
           if old in s:
               s = s.replace(old, new, 1)
+          old = "Authorization:'Bearer '+sb.key,'Content-Type':'application/json',Prefer:"
+          new = "Authorization:'Bearer '+sb.key,'x-admin-password':pw.value,'Content-Type':'application/json',Prefer:"
+          if old in s:
+              s = s.replace(old, new, 1)
           p.write_text(s)
           PY
 
