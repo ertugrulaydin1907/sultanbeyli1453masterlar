@@ -42,8 +42,8 @@ jobs:
           new = "let cfg=JSON.parse(localStorage.getItem('mplSupabaseConfig')||'{}');if(!cfg.url||!cfg.key){cfg={url:'"+url+"',key:'"+key+"'};localStorage.setItem('mplSupabaseConfig',JSON.stringify(cfg))};let sb=null,db="
           if old in s:
               s = s.replace(old, new, 1)
-          old = "Authorization:'Bearer '+sb.key,'Content-Type':'application/json',Prefer:"
-          new = "Authorization:'Bearer '+sb.key,'x-admin-password':pw.value,'Content-Type':'application/json',Prefer:"
+          old = "async function api(path,opt={}){if(!sb)throw Error('Supabase bağlantısı yok.');const r=await fetch(sb.url+'/rest/v1/'+path,{...opt,headers:{apikey:sb.key,Authorization:'Bearer '+sb.key,'x-admin-password':pw.value,'Content-Type':'application/json',Prefer:opt.method==='POST'?'return=representation':'return=minimal',...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}"
+          new = "async function api(path,opt={}){if(!sb)throw Error('Supabase bağlantısı yok.');const method=opt.method||'GET';if(method==='POST'||method==='DELETE'||method==='PATCH'){const table=path.split('?')[0];let body=opt.body?JSON.parse(opt.body):{};let action=method==='POST'?'insert':method==='DELETE'?'delete':'update';let id=(path.match(/id=eq\\.([^&]+)/)||[])[1];const r=await fetch(sb.url+'/functions/v1/admin-api',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':ADMIN_PASSWORD},body:JSON.stringify({table,action,id,data:body})});if(!r.ok)throw Error(await r.text());return r.json()}const r=await fetch(sb.url+'/rest/v1/'+path,{headers:{apikey:sb.key,Authorization:'Bearer '+sb.key}});if(!r.ok)throw Error(await r.text());return r.json()}"
           if old in s:
               s = s.replace(old, new, 1)
           p.write_text(s)
